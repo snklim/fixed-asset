@@ -122,7 +122,7 @@ asset.controller('AssetCtrl', ['$scope', function ($scope) {
 		return $scope.systemPeriods[periodIndex].number;
 	}
 
-	function getIterationNumberAndLifetime (period) {
+	function getLifetime (period) {
 
 		var year = period.year,
 			number = period.number,
@@ -140,121 +140,54 @@ asset.controller('AssetCtrl', ['$scope', function ($scope) {
 		})
 
 		if (lifetimeIndex < 0) {
-			return {
-				iterationNumber: 10000,
-				lifetime: 20
-			}
+			return 20;
 		}
 
-		if (lifetimeIndex == lifetimeRegimes.length - 1) {
-			return {
-				iterationNumber: 10000,
-				lifetime: lifetimeRegimes[lifetimeIndex].lifetime
-			}
-		}
-
-		toYear = lifetimeRegimes[lifetimeIndex + 1].period.year;
-		toNumber = lifetimeRegimes[lifetimeIndex + 1].period.number;
-		
-		while (year < toYear || (year == toYear && number < toNumber)) {
-			iterationNumber += 1;
-			number += 1;
-			if(number > getPeriodsForYear(year)){
-				year += 1;
-				number = 1;
-			}
-		}
-
-		return {
-			iterationNumber: iterationNumber,
-			lifetime: lifetimeRegimes[lifetimeIndex].lifetime
-		}
+		return lifetimeRegimes[lifetimeIndex].lifetime
 	}
 
 	function dipricitePurchases() {
 		var periods = {},
 			key,
-			passedPeriods;
+			passedPeriods,
+			startPeriod = $scope.purchases[0].period;
 
-		$scope.purchases.forEach(function (purchase){
+		var purchase = $scope.purchases[0];
 
-			key = getPeriodKey(purchase.period);
-			passedPeriods = periods[key] && periods[key][0].passedPeriods || 0;
+		var fixedAsset = {
+			lifetime: getLifetime(purchase.period),
+			currentValue: getFixedAssetCurrentValue(purchase.period),
+			passedPeriods: 0,
+			startPeriod: purchase.period,
+			currentPeriod: purchase.period
+		};
 
-			depretiatePurchaseCompletely(purchase, passedPeriods).forEach(function (period) {
-				key = getPeriodKey(period.currentPeriod);
-				periods[key] = periods[key] || [];
-				periods[key].push(period);
-			})
+		$scope.periods = [];
 
-		});		
+		var depreciatedPeriod;
 
-		$scope.periods = margePeriods(periods);
-	}
-
-	function depretiatePurchaseCompletely (purchase, passedPeriods) {
-
-		var iterationNumberAndLifetime,
-			iterationNumber,
-			lifetime,
-			periods = [],
-			lastItem,
-			period;
-
-		iterationNumberAndLifetime = getIterationNumberAndLifetime(purchase.period);
-
-		iterationNumber = iterationNumberAndLifetime.iterationNumber;
-		lifetime = iterationNumberAndLifetime.lifetime;
-
-		while (true) {
-			depreciatePurchase(lifetime, purchase, passedPeriods, iterationNumber).forEach(function (item) {
-				periods.push(item);
-			});
+		while (fixedAsset.currentValue > 0) {
 			
-			lastItem = periods[periods.length - 1];
+			depreciatedPeriod = getDepreciationPeriod(fixedAsset.lifetime, fixedAsset.currentValue, fixedAsset.passedPeriods, fixedAsset.startPeriod, fixedAsset.currentPeriod);
 
-			if (lastItem.periodsToGo > 0) {
-				period = getNextPeriod(lastItem.currentPeriod);
-				iterationNumberAndLifetime = getIterationNumberAndLifetime(period);
-				
-				iterationNumber = iterationNumberAndLifetime.iterationNumber;
-				lifetime = iterationNumberAndLifetime.lifetime;
-
-				passedPeriods = lastItem.passedPeriods;
-
-				purchase = {
-					price: lastItem.nettBookValue,
-					period: period
-				}
-
-				continue;
-			}
-
-			break;
+			$scope.periods.push(depreciatedPeriod);
+			
+			fixedAsset.passedPeriods += 1;
+			fixedAsset.currentPeriod = getNextPeriod(fixedAsset.currentPeriod);
+			fixedAsset.currentValue = depreciatedPeriod.nettBookValue + getFixedAssetCurrentValue(fixedAsset.currentPeriod);
 		}
-
-		return periods;
 	}
 
-	function margePeriods (periods) {
-		var ret = [],
-			key,
-			items,
-			period;
+	function getFixedAssetCurrentValue (period) {
+		var currentValue = 0;
 
-		for (key in periods) {
-			if (periods.hasOwnProperty(key)) {
-				items = periods[key];
-				period = items[0];
-				items.splice(1, items.length).forEach(function (item) {
-					period.amount = round(period.amount + item.amount, 2);
-					period.nettBookValue = round(period.nettBookValue + item.nettBookValue, 2);
-				})
-				ret.push(period);
+		$scope.purchases.forEach(function (purchase) {
+			if (getPeriodKey(purchase.period) == getPeriodKey(period)) {
+				currentValue += purchase.price;
 			}
-		}
+		});
 
-		return ret;
+		return currentValue;
 	}
 
 	function getNextPeriod (period) {
@@ -277,52 +210,64 @@ asset.controller('AssetCtrl', ['$scope', function ($scope) {
 		return period.year + '/' + period.number;
 	}
 
-	function depreciatePurchase (assetLifetime, purchase, passedPeriods, iterationNumber) {
+	function getDepreciationPeriod (lifetime, currentValue, periodIndex, startPeriod, currentPeriod) {
+		
+		var nettBookValue = currentValue;
+		var remainedPeriods;
+		var amountToDepreciate;
+		var data;
 
-		passedPeriods = passedPeriods || 0;
+		data = getRemainedPeriods(startPeriod, lifetime, periodIndex);
 
-		var price = purchase.price,
-			currentPeriod = {year: purchase.period.year, number: purchase.period.number},
-			periodsToGo = round(getPeriodsForYear(currentPeriod.year) * 100 / assetLifetime - passedPeriods, 4),
-			nettBookValue = price,
-			amount,
-			periods = [],
-			factor,
-			nextPeriod;
+		remainedPeriods = data.remainedPeriods;
 
-		while (periodsToGo > 0 && iterationNumber > 0) {
+		amountToDepreciate = round(nettBookValue / remainedPeriods, 2);
 
-			if (periodsToGo > 0 && periodsToGo < 1) {
-				periodsToGo = 1;
-			}
+		nettBookValue = round(nettBookValue - amountToDepreciate, 2);
 
-			passedPeriods = round(passedPeriods + 1, 4);
-			amount = round(nettBookValue / periodsToGo, 2);
-			nettBookValue = round(nettBookValue - amount, 2);
-			periodsToGo = round(periodsToGo - 1, 4);
+		return {
+			periodIndex: periodIndex, 
+			currentPeriod: currentPeriod, 
+			nettBookValue: nettBookValue, 
+			amount: amountToDepreciate,
+			periodsToGo: remainedPeriods - 1,
+			passedPeriods: data.passedPeriods + 1
+		};	
+	}
+
+	function getRemainedPeriods (startPeriod, lifetime, passedIterations) {
+
+		var currentPeriod = {year:startPeriod.year,number:startPeriod.number};
+		var nextPeriod;
+		var remainedPeriods = round(getPeriodsForYear(startPeriod.year) * 100 / lifetime, 4);
+		var factor;
+		var passedPeriods = 0;
+
+		while (passedIterations > 0) {
+
+			remainedPeriods -= 1;
+
+			passedPeriods += 1;
 
 			nextPeriod = getNextPeriod(currentPeriod);
 
-			if (currentPeriod.year != nextPeriod.year) {
-				factor = getPeriodsForYear(nextPeriod.year) / getPeriodsForYear(nextPeriod.year - 1);
-				periodsToGo = round(periodsToGo * factor, 4);
-				passedPeriods = round(passedPeriods * factor, 4);
+			if (nextPeriod.year != currentPeriod.year) {
+				factor = getPeriodsForYear(nextPeriod.year)/getPeriodsForYear(currentPeriod.year);
+				remainedPeriods = round(factor * remainedPeriods, 4);
+				passedPeriods = round(factor * passedPeriods, 4);
 			}
 
-			periods.push({
-				index: periods.length,
-				passedPeriods: passedPeriods,
-				periodsToGo: periodsToGo,
-				nettBookValue: nettBookValue, 
-				amount: amount,
-				currentPeriod: {year:currentPeriod.year,number:currentPeriod.number}
-			});
-
-			iterationNumber -= 1;
 			currentPeriod = nextPeriod;
+
+			passedIterations -= 1;
 		}
 
-		return periods;
+		if (remainedPeriods > 0 && remainedPeriods < 1) {
+			remainedPeriods = 1;
+		}
+
+		return {remainedPeriods:remainedPeriods,passedPeriods:passedPeriods};
+
 	}
 
 	function round (value, fraction) {
