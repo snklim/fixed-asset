@@ -62,8 +62,8 @@ asset.factory('depreciationService', ['utils', 'remainedPeriodsService', 'purcha
 			currentPeriod: currentPeriod, 
 			nettBookValue: nettBookValue, 
 			amount: amountToDepreciate,
-			periodsToGo: remainedPeriods - 1,
-			passedPeriods: data.passedPeriods + 1
+			periodsToGo: utils.round(remainedPeriods - 1, 4),
+			passedPeriods: utils.round(data.passedPeriods + 1, 4)
 		};	
 	}
 

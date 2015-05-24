@@ -6,31 +6,9 @@
   <li role="presentation" ng-class="{active:page == 'PERIODS'}"><a href ng-click="page = 'PERIODS'">Periods</a></li>
   <li role="presentation" ng-class="{active:page == 'PURCHASES'}"><a href ng-click="page = 'PURCHASES'">Purchases</a></li>
   <li role="presentation" ng-class="{active:page == 'DEPRECIATIONS'}"><a href ng-click="page = 'DEPRECIATIONS'">Depreciations</a></li>
-  <li role="presentation" ng-class="{active:page == 'DEMO'}"><a href ng-click="page = 'DEMO'">Demo</a></li>
 </ul>
 
 <hr>
-
-<div ng-show="page == 'DEMO'">
-	<div class="list-group">
-		<table class="table">
-			<thead>
-				<th>#</th>
-				<th>Period</th>
-				<th>Nett Book Value</th>
-				<th>Write Off Amount</th>
-			</thead>
-			<tbody>
-				<tr ng-repeat="period in demoPeriods">
-					<td>{{period.periodIndex}}</td>
-					<td>{{period.currentPeriod.year + '/' + period.currentPeriod.number}}</td>
-					<td>{{period.nettBookValue}}</td>
-					<td>{{period.amountToDepreciate}}</td>
-				</tr>
-			</tbody>
-		</table>
-	</div>	
-</div>
 
 <div ng-show="page == 'PERIODS'">
 <form class="form-horizontal" ng-submit="addPeriod()">

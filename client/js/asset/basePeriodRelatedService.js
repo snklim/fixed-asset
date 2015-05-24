@@ -2,10 +2,10 @@
 
 var asset = angular.module('asset');
 
-asset.factory('basePeriodRelatedService', ['baseService', 'periodsService', function (baseService, periodsService) {
+asset.factory('basePeriodRelatedService', ['baseService', 'utils', function (baseService, utils) {
 
 	function createService (items) {
-		return baseService.createService(items, periodsService.sortByPeriod);
+		return baseService.createService(items, utils.sortByPeriod);
 	}
 
 	return {

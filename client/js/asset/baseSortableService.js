@@ -4,6 +4,14 @@ var asset = angular.module('asset');
 
 asset.factory('baseService', [function () {
 
+	function sortInternal (items, sortStrategy) {
+		items.sort(sortStrategy);
+
+		items.forEach(function (item, index) {
+			item.index = index;
+		})
+	}
+
 	function getItemsInternal (items) {
 		var itemsCopy = [];
 
@@ -17,7 +25,7 @@ asset.factory('baseService', [function () {
 	function addItemInternal (items, newItem, sortStrategy) {
 		items.push(newItem);
 
-		items.sort(sortStrategy)
+		sortInternal(items, sortStrategy);
 
 		return getItemsInternal(items);
 	}
@@ -25,7 +33,7 @@ asset.factory('baseService', [function () {
 	function removeItemInternal (items, itemToRemove, sortStrategy) {
 		items.splice(itemToRemove.index, 1);
 
-		items.sort(sortStrategy)
+		sortInternal(items, sortStrategy);
 
 		return getItemsInternal(items);
 	}
@@ -45,6 +53,8 @@ asset.factory('baseService', [function () {
 	function createService (items, sortStrategy) {
 
 		sortStrategy = sortStrategy || function(){return 0;};
+
+		sortInternal(items, sortStrategy);
 		
 		function getItems () {
 			return getItemsInternal(items);
