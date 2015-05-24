@@ -1,7 +1,8 @@
 <h1>Fixed Asset</h1>
 <hr>
 
-<ul class="nav nav-tabs" ng-init="page = 'LIFETIME'">
+<ul class="nav nav-tabs" ng-init="page = 'FIXEDASSET'">
+  <li role="presentation" ng-class="{active:page == 'FIXEDASSET'}"><a href ng-click="page = 'FIXEDASSET'">Fixed Asset</a></li>
   <li role="presentation" ng-class="{active:page == 'LIFETIME'}"><a href ng-click="page = 'LIFETIME'">Lifetime</a></li>
   <li role="presentation" ng-class="{active:page == 'PERIODS'}"><a href ng-click="page = 'PERIODS'">Periods</a></li>
   <li role="presentation" ng-class="{active:page == 'PURCHASES'}"><a href ng-click="page = 'PURCHASES'">Purchases</a></li>
@@ -9,6 +10,28 @@
 </ul>
 
 <hr>
+
+<div ng-show="page == 'FIXEDASSET'">
+	<form class="form-horizontal" ng-submit="updateFixedAsset()">
+		<div class="form-group">
+			<label for="inputStartPeriodYear" class="col-sm-3 control-label">Start Period Year</label>
+			<div class="col-sm-9">
+				<input type="number" class="form-control" id="inputStartPeriodYear" placeholder="Start Period Year" ng-model="startPeriodYear">
+			</div>
+		</div>
+		<div class="form-group">
+			<label for="inputStartPeriodNumber" class="col-sm-3 control-label">Start Period Number</label>
+			<div class="col-sm-9">
+				<input type="number" class="form-control" id="inputStartPeriodNumber" placeholder="Start Period Number" ng-model="startPeriodNumber">
+			</div>
+		</div>
+		<div class="form-group">
+			<div class="col-sm-offset-3 col-sm-9">
+				<button type="submit" class="btn btn-default">Update Fixed Asset</button>
+			</div>
+		</div>
+	</form>
+</div>
 
 <div ng-show="page == 'PERIODS'">
 <form class="form-horizontal" ng-submit="addPeriod()">
@@ -55,13 +78,13 @@
 <div ng-show="page == 'LIFETIME'">
 <form class="form-horizontal" ng-submit="addLifetime()">
 <div class="form-group">
-    <label for="inputLifetimePeriodYear" class="col-sm-3 control-label">Lifetime Period Year</label>
+    <label for="inputLifetimePeriodYear" class="col-sm-3 control-label">Period Year</label>
     <div class="col-sm-9">
       <input type="number" class="form-control" id="inputLifetimePeriodYear" placeholder="Lifetime Period Year" ng-model="lifetimePeriodYear">
     </div>
   </div>
   <div class="form-group">
-    <label for="inputLifetimePeriodNumber" class="col-sm-3 control-label">Lifetime Period Number</label>
+    <label for="inputLifetimePeriodNumber" class="col-sm-3 control-label">Period Number</label>
     <div class="col-sm-9">
       <input type="number" class="form-control" id="inputLifetimePeriodNumber" placeholder="Lifetime Period Number" ng-model="lifetimePeriodNumber">
     </div>
@@ -70,6 +93,18 @@
 		<label for="inputLifetime" class="col-sm-3 control-label">Lifetime %</label>
 		<div class="col-sm-9">
 			<input type="number" class="form-control" id="inputLifetime" placeholder="Lifetime" ng-model="assetLifetime">
+		</div>
+	</div>
+	<div class="form-group">
+		<label for="inputStopValue" class="col-sm-3 control-label">Stop Value</label>
+		<div class="col-sm-9">
+			<input type="number" class="form-control" id="inputStopValue" placeholder="Stop Value" ng-model="lifetimeStopValue">
+		</div>
+	</div>
+	<div class="form-group">
+		<label for="inputRemainedValue" class="col-sm-3 control-label">Remained Value</label>
+		<div class="col-sm-9">
+			<input type="number" class="form-control" id="inputRemainedValue" placeholder="Remained Value" ng-model="lifetimeRemainedValue">
 		</div>
 	</div>
 	<div class="form-group">
@@ -84,6 +119,8 @@
 		<th>#</th>
 		<th>Start Period</th>
 		<th>Lifetime</th>
+		<th>Stop Value</th>
+		<th>Remained Value</th>
 		<th></th>
 	</thead>
 	<tbody>
@@ -91,6 +128,8 @@
 			<td>{{regime.index + 1}}</td>
 			<td>{{regime.period.year + '/' + regime.period.number}}</td>
 			<td>{{regime.lifetime}}</td>
+			<td>{{regime.stopvalue}}</td>
+			<td>{{regime.remainedvalue}}</td>
 			<td><i class="glyphicon glyphicon-remove pull-right"
 	    		ng-click="removeRegime(regime)"></td>
 		</tr>

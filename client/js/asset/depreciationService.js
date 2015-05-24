@@ -2,66 +2,55 @@
 
 var asset = angular.module('asset');
 
-asset.factory('depreciationService', ['utils', 'remainedPeriodsService', 'purchasesService', 'lifetimeService', 'periodsService',
-	function (utils, remainedPeriodsService, purchasesService, lifetimeService, periodsService) {
+asset.factory('depreciationService', ['utils', 'remainedPeriodsService', 'fixedAssetService',
+	function (utils, remainedPeriodsService, fixedAssetService) {
 
 	function depreciatePurchases() {
 
-		var purchases = purchasesService.getPurchases()
+		var fixedAsset;
 
-		var periods = {},
-			key,
-			passedPeriods,
-			startPeriod =  purchases[0].period;
-
-		var purchase = purchases[0];
-
-		var fixedAsset = {
-			lifetime: lifetimeService.getLifetime(purchase.period),
-			currentValue: purchasesService.getFixedAssetCurrentValue(purchase.period),
-			passedPeriods: 0,
-			startPeriod: purchase.period,
-			currentPeriod: purchase.period
-		};
-
-		var ret = [];
+		var periods = [];
 
 		var depreciatedPeriod;
 
-		while (fixedAsset.currentValue > 0) {
-			
-			depreciatedPeriod = getDepreciationPeriod(fixedAsset.lifetime, fixedAsset.currentValue, fixedAsset.passedPeriods, fixedAsset.startPeriod, fixedAsset.currentPeriod);
+		do {
 
-			ret.push(depreciatedPeriod);
+			fixedAsset = fixedAssetService.getFixedAsset();
 			
-			fixedAsset.passedPeriods += 1;
-			fixedAsset.currentPeriod = utils.getNextPeriod(fixedAsset.currentPeriod);
-			fixedAsset.currentValue = depreciatedPeriod.nettBookValue + purchasesService.getFixedAssetCurrentValue(fixedAsset.currentPeriod);
-		}
+			depreciatedPeriod = getDepreciationPeriod(fixedAsset.regime, fixedAsset.currentValue, fixedAsset.passedPeriods, fixedAsset.startPeriod, fixedAsset.currentPeriod);
 
-		return ret;
+			periods.push(depreciatedPeriod);
+
+			fixedAssetService.writeOff(depreciatedPeriod.amount);
+
+		} while (depreciatedPeriod.periodsToGo > 0)
+
+		return periods;
 	}
 
-	function getDepreciationPeriod (lifetime, currentValue, periodIndex, startPeriod, currentPeriod) {
+	function getDepreciationPeriod (regime, currentValue, periodIndex, startPeriod, currentPeriod) {
 		
-		var nettBookValue = currentValue;
 		var remainedPeriods;
 		var amountToDepreciate;
 		var data;
+		var lifetime = regime.lifetime;
+		var stopvalue = regime.stopvalue;
 
 		data = remainedPeriodsService.getRemainedPeriods(startPeriod, lifetime, periodIndex);
 
 		remainedPeriods = data.remainedPeriods;
 
-		amountToDepreciate = utils.round(nettBookValue / remainedPeriods, 2);
+		amountToDepreciate = utils.round((currentValue - regime.remainedvalue) / remainedPeriods, 2);
 
-		nettBookValue = utils.round(nettBookValue - amountToDepreciate, 2);
+		if (currentValue - amountToDepreciate < stopvalue) {
+			amountToDepreciate = currentValue - stopvalue;
+		}
 
 		return {
 			periodIndex: periodIndex, 
 			currentPeriod: currentPeriod, 
-			nettBookValue: nettBookValue, 
-			amount: amountToDepreciate,
+			nettBookValue: utils.round(currentValue - amountToDepreciate, 2), 
+			amount: amountToDepreciate,			
 			periodsToGo: utils.round(remainedPeriods - 1, 4),
 			passedPeriods: utils.round(data.passedPeriods + 1, 4)
 		};	
