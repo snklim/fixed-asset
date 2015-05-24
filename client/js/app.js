@@ -21,7 +21,7 @@ angular
         templateUrl: 'js/asset/templates/asset.html',
         controller: 'AssetCtrl'
       });
-    $urlRouterProvider.otherwise('todo');
+    $urlRouterProvider.otherwise('fixed-asset');
   }])
   .config(['localStorageServiceProvider', function (localStorageServiceProvider) {
     localStorageServiceProvider

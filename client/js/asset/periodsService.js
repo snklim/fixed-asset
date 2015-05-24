@@ -2,66 +2,34 @@
 
 var asset = angular.module('asset');
 
-asset.factory('periodsService', [function () {
+asset.factory('periodsService', ['baseService', function (baseService) {
 	
-	var systemPeriods = [
+	var base = baseService.createService([
 		{year:2015,number:12},
 		{year:2016,number:5},
 		{year:2017,number:6},
 		{year:2018,number:3}
-	];
-
-	function getSystemPeriods (argument) {
-		var periods = [];
-
-		systemPeriods.forEach(function (p) {
-			periods.push(p);
-		});
-
-		return periods;
-	}
+	], function (a, b) {
+		return a.year == b.year ? 0 : (a.year < b.year ? -1 : 1);
+	});
 
 	function getPeriodsForYear(year){
-		var periodIndex = -1;
 
-		systemPeriods.forEach(function (period, index) {
-			if (period.year <= year) {
-				periodIndex = index;
-			}
-		})
+		var items = base.findItems(function (item) {
+			return item.year <= year;
+		});
 
-		if (periodIndex < 0) {
+		if (items.length == 0)
 			return 12;
-		}
 
-		return systemPeriods[periodIndex].number;
-	}
-
-	function getNextPeriod (period) {
-		var year = period.year;
-		var number = period.number;
-
-		number += 1;
-		if(number > getPeriodsForYear(year)){
-			year += 1;
-			number = 1;
-		}
-
-		return {
-			year: year,
-			number: number
-		}
-	}
-
-	function getPeriodKey (period) {
-		return period.year + '/' + period.number;
+		return items[items.length - 1].number;
 	}
 
 	return {
-		getSystemPeriods, getSystemPeriods,
+		getSystemPeriods: base.getItems,
 		getPeriodsForYear: getPeriodsForYear,
-		getNextPeriod: getNextPeriod,
-		getPeriodKey: getPeriodKey
+		addPeriod: base.addItem,
+		removePeriod: base.removeItem
 	};
 
 }]);

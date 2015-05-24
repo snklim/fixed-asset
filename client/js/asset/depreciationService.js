@@ -35,7 +35,7 @@ asset.factory('depreciationService', ['utils', 'remainedPeriodsService', 'purcha
 			ret.push(depreciatedPeriod);
 			
 			fixedAsset.passedPeriods += 1;
-			fixedAsset.currentPeriod = periodsService.getNextPeriod(fixedAsset.currentPeriod);
+			fixedAsset.currentPeriod = utils.getNextPeriod(fixedAsset.currentPeriod);
 			fixedAsset.currentValue = depreciatedPeriod.nettBookValue + purchasesService.getFixedAssetCurrentValue(fixedAsset.currentPeriod);
 		}
 

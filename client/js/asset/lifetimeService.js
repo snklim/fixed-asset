@@ -2,49 +2,30 @@
 
 var asset = angular.module('asset');
 
-asset.factory('lifetimeService', [function () {
+asset.factory('lifetimeService', ['basePeriodRelatedService', function (basePeriodRelatedService) {
 
-	var lifetimeRegimes = [
+	var baseService = basePeriodRelatedService.createService([
 		{period: {year:2015,number:1},lifetime: 20},
 		{period: {year:2015,number:11},lifetime: 20},
 		{period: {year:2017,number:1},lifetime: 20}
-	];
-
-	function getLifetimeRegimes (argument) {
-		var arr = [];
-
-		lifetimeRegimes.forEach(function (l) {
-			arr.push(l);
-		});
-
-		return arr;
-	}
+	]);
 	
 	function getLifetime (period) {
 
-		var year = period.year,
-			number = period.number,
-			lifetimeIndex = -1,
-			toYear,
-			toNumber,
-			iterationNumber = 0;
+		var items = baseService.findItems(function (item) {
+			return item.period.year <= period.year && item.period.number <= period.number
+		});
 
-		lifetimeRegimes.forEach(function (dr, index) {			
-			if(dr.period.year <= period.year && dr.period.number <= period.number)
-			{
-				lifetimeIndex = index;
-			}
-		})
-
-		if (lifetimeIndex < 0) {
+		if (items.length == 0)
 			return 20;
-		}
 
-		return lifetimeRegimes[lifetimeIndex].lifetime
+		return items[items.length - 1].lifetime;
 	}
 
 	return {
-		getLifetimeRegimes: getLifetimeRegimes,
+		addLifetime: baseService.addItem,
+		removeLifetime: baseService.removeItem,
+		getLifetimeRegimes: baseService.getItems,
 		getLifetime: getLifetime
 	}
 

@@ -18,10 +18,10 @@ asset.factory('remainedPeriodsService', ['utils', 'periodsService', function (ut
 
 			passedPeriods += 1;
 
-			nextPeriod = periodsService.getNextPeriod(currentPeriod);
+			nextPeriod = utils.getNextPeriod(currentPeriod);
 
 			if (nextPeriod.year != currentPeriod.year) {
-				factor = periodsService.getPeriodsForYear(nextPeriod.year)/periodsService.getPeriodsForYear(currentPeriod.year);
+				factor = periodsService.getPeriodsForYear(nextPeriod.year) / periodsService.getPeriodsForYear(currentPeriod.year);
 				remainedPeriods = utils.round(factor * remainedPeriods, 4);
 				passedPeriods = utils.round(factor * passedPeriods, 4);
 			}

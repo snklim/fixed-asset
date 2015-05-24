@@ -2,36 +2,28 @@
 
 var asset = angular.module('asset');
 
-asset.factory('purchasesService', ['periodsService', function (periodsService) {
+asset.factory('purchasesService', ['periodsService', 'basePeriodRelatedService', 'utils', function (periodsService, basePeriodRelatedService, utils) {
 
-	var purchases = [
-		{index:0,price:225,period:{year:2015,number:1}}
-	];
-
-	function getPurchases () {
-		var arr = [];
-
-		purchases.forEach(function (p) {
-			arr.push(p);
-		})
-
-		return arr;
-	}
+	var baseService = basePeriodRelatedService.createService([
+		{price:225,period:{year:2015,number:1}}
+	]);
 	
 	function getFixedAssetCurrentValue (period) {
 		var currentValue = 0;
 
-		purchases.forEach(function (purchase) {
-			if (periodsService.getPeriodKey(purchase.period) == periodsService.getPeriodKey(period)) {
-				currentValue += purchase.price;
-			}
+		baseService.findItems(function (item) {
+			return utils.getPeriodKey(item.period) == utils.getPeriodKey(period);
+		}).forEach(function (item) {
+			currentValue += item.price;
 		});
 
 		return currentValue;
 	}
 
 	return {
-		getPurchases: getPurchases,
+		addPurchase: baseService.addItem,
+		removePurchase: baseService.removeItem,
+		getPurchases: baseService.getItems,
 		getFixedAssetCurrentValue: getFixedAssetCurrentValue
 	};
 
